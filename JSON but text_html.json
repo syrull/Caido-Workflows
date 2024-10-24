@@ -1,0 +1,151 @@
+{
+  "description": "Find JSON responses but with text/html MIME.",
+  "edition": 2,
+  "graph": {
+    "edges": [
+      {
+        "source": {
+          "exec_alias": "exec",
+          "node_id": 2
+        },
+        "target": {
+          "exec_alias": "exec",
+          "node_id": 4
+        }
+      },
+      {
+        "source": {
+          "exec_alias": "true",
+          "node_id": 4
+        },
+        "target": {
+          "exec_alias": "exec",
+          "node_id": 3
+        }
+      },
+      {
+        "source": {
+          "exec_alias": "true",
+          "node_id": 3
+        },
+        "target": {
+          "exec_alias": "exec",
+          "node_id": 5
+        }
+      },
+      {
+        "source": {
+          "exec_alias": "exec",
+          "node_id": 5
+        },
+        "target": {
+          "exec_alias": "exec",
+          "node_id": 1
+        }
+      }
+    ],
+    "nodes": [
+      {
+        "alias": "passive_end",
+        "definition_id": "caido/passive-end",
+        "display": {
+          "x": 30,
+          "y": 280
+        },
+        "id": 1,
+        "inputs": [],
+        "name": "Passive End",
+        "version": "0.1.0"
+      },
+      {
+        "alias": "on_intercept_response",
+        "definition_id": "caido/on-intercept-response",
+        "display": {
+          "x": 30,
+          "y": -20
+        },
+        "id": 2,
+        "inputs": [],
+        "name": "On Intercept Response",
+        "version": "0.1.0"
+      },
+      {
+        "alias": "if_else",
+        "definition_id": "caido/if-else",
+        "display": {
+          "x": 30,
+          "y": 140
+        },
+        "id": 3,
+        "inputs": [
+          {
+            "alias": "condition",
+            "value": {
+              "data": "$in_scope.result",
+              "kind": "ref"
+            }
+          }
+        ],
+        "name": "If/Else",
+        "version": "0.1.0"
+      },
+      {
+        "alias": "in_scope",
+        "definition_id": "caido/in-scope",
+        "display": {
+          "x": 30,
+          "y": 70
+        },
+        "id": 4,
+        "inputs": [
+          {
+            "alias": "request",
+            "value": {
+              "data": "$on_intercept_response.request",
+              "kind": "ref"
+            }
+          }
+        ],
+        "name": "In Scope",
+        "version": "0.1.0"
+      },
+      {
+        "alias": "javascript",
+        "definition_id": "caido/http-code-js",
+        "display": {
+          "x": 30,
+          "y": 210
+        },
+        "id": 5,
+        "inputs": [
+          {
+            "alias": "request",
+            "value": {
+              "data": "$on_intercept_response.request",
+              "kind": "ref"
+            }
+          },
+          {
+            "alias": "response",
+            "value": {
+              "data": "$on_intercept_response.response",
+              "kind": "ref"
+            }
+          },
+          {
+            "alias": "code",
+            "value": {
+              "data": "/**\n * @param {HttpInput} input\n * @param {SDK} sdk\n * @returns {MaybePromise<Data | undefined>}\n */\nexport async function run({ request, response }, sdk) {\n  let body = response.getBody().toText();\n  let headers = response.getHeaders();\n\n  if (body.startsWith('{') || body.startsWith('[')) {\n    if (headers['content-type'] === 'text/html') {\n      let description = 'The response is HTML, but it looks like JSON. This is likely a misconfigured server.';\n      await sdk.findings.create({\n        title: \"JSON but text/html\",\n        description: description,\n        request: request,\n        reporter: \"JSON but text/html\",\n        dedupeKey: description\n      });\n  } \n}\n",
+              "kind": "string"
+            }
+          }
+        ],
+        "name": "Javascript",
+        "version": "0.1.0"
+      }
+    ]
+  },
+  "id": "573549c3-2569-46c7-8bd7-0b3ab2faca0f",
+  "kind": "passive",
+  "name": "JSON but text/html"
+}

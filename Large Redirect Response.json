@@ -1,0 +1,151 @@
+{
+  "description": "This will flag redirect responses with a body over 1000 bytes - this can indicate sites that forgot to terminate script execution when the user fails authentication, typically leading to information disclosure.",
+  "edition": 2,
+  "graph": {
+    "edges": [
+      {
+        "source": {
+          "exec_alias": "exec",
+          "node_id": 5
+        },
+        "target": {
+          "exec_alias": "exec",
+          "node_id": 4
+        }
+      },
+      {
+        "source": {
+          "exec_alias": "exec",
+          "node_id": 2
+        },
+        "target": {
+          "exec_alias": "exec",
+          "node_id": 1
+        }
+      },
+      {
+        "source": {
+          "exec_alias": "true",
+          "node_id": 4
+        },
+        "target": {
+          "exec_alias": "exec",
+          "node_id": 6
+        }
+      },
+      {
+        "source": {
+          "exec_alias": "true",
+          "node_id": 6
+        },
+        "target": {
+          "exec_alias": "exec",
+          "node_id": 2
+        }
+      }
+    ],
+    "nodes": [
+      {
+        "alias": "passive_end",
+        "definition_id": "caido/passive-end",
+        "display": {
+          "x": 90,
+          "y": 240
+        },
+        "id": 1,
+        "inputs": [],
+        "name": "Passive End",
+        "version": "0.1.0"
+      },
+      {
+        "alias": "javascript",
+        "definition_id": "caido/http-code-js",
+        "display": {
+          "x": 90,
+          "y": 150
+        },
+        "id": 2,
+        "inputs": [
+          {
+            "alias": "code",
+            "value": {
+              "data": "/**\n * @param {HttpInput} input\n * @param {SDK} sdk\n * @returns {MaybePromise<Data | undefined>}\n */\nexport async function run({ request, response }, sdk) {\n  if(response) {\n    const responseCode = response.getCode();\n    const responseBodyLength = response.getBody().toRaw().length;\n\n    if (responseCode <= 399 && responseCode >= 300 && responseBodyLength > 1000) {\n      const requestUrl = request.getUrl();\n      const description = `The response from the request to ${requestUrl} is a redirect response with a body larger than 1000 bytes. This may indicate a misconfiguration or a security issue.`;\n\n      await sdk.findings.create({\n      title: \"Large Redirect Response Detected\",\n      description: description,\n      request: request,\n      reporter: \"Large Redirect Response\",\n      dedupeKey: description\n      });\n    }\n  }\n}\n",
+              "kind": "string"
+            }
+          },
+          {
+            "alias": "request",
+            "value": {
+              "data": "$on_intercept_response.request",
+              "kind": "ref"
+            }
+          },
+          {
+            "alias": "response",
+            "value": {
+              "data": "$on_intercept_response.response",
+              "kind": "ref"
+            }
+          }
+        ],
+        "name": "Large Redirect Response",
+        "version": "0.1.0"
+      },
+      {
+        "alias": "in_scope",
+        "definition_id": "caido/in-scope",
+        "display": {
+          "x": 100,
+          "y": -40
+        },
+        "id": 4,
+        "inputs": [
+          {
+            "alias": "request",
+            "value": {
+              "data": "$on_intercept_response.request",
+              "kind": "ref"
+            }
+          }
+        ],
+        "name": "In Scope",
+        "version": "0.1.0"
+      },
+      {
+        "alias": "on_intercept_response",
+        "definition_id": "caido/on-intercept-response",
+        "display": {
+          "x": 100,
+          "y": -140
+        },
+        "id": 5,
+        "inputs": [],
+        "name": "On Intercept Response",
+        "version": "0.1.0"
+      },
+      {
+        "alias": "if_else",
+        "definition_id": "caido/if-else",
+        "display": {
+          "x": 100,
+          "y": 60
+        },
+        "id": 6,
+        "inputs": [
+          {
+            "alias": "condition",
+            "value": {
+              "data": "$in_scope.result",
+              "kind": "ref"
+            }
+          }
+        ],
+        "name": "If/Else",
+        "version": "0.1.0"
+      }
+    ]
+  },
+  "id": "31fe6f8e-bc36-4e52-a213-be7c6e4c1a63",
+  "kind": "passive",
+  "name": "Large Redirect Response"
+}
